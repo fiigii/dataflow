@@ -2,7 +2,7 @@ module AnalysisTools where
 
 import Ast
 import qualified Data.Set as Set
-import Data.Set (union)
+import Data.Set (union, Set)
 import Data.List (foldl')
 
 initial :: Statement -> Label
@@ -68,17 +68,38 @@ fv (CallExpr f args) = fv f `union`
                               args
 fv _ = Set.empty
 
-nontrivialSubExprs :: Expression -> Set.Set Expression
-nontrivialSubExprs e@(InfixExpr _ e1 e2) = Set.singleton e `union`
-                                           nontrivialSubExprs e1 `union`
-                                           nontrivialSubExprs e2
-nontrivialSubExprs e@(CondExpr e1 e2 e3) = Set.singleton e `union`
-                                           nontrivialSubExprs e1 `union`
-                                           nontrivialSubExprs e2 `union`
-                                           nontrivialSubExprs e3
-nontrivialSubExprs (AssignExpr _ _ e) = nontrivialSubExprs e
-nontrivialSubExprs e@(CallExpr e1 es) =
-  Set.singleton e `union`
-  nontrivialSubExprs e1 `union`
-  foldl' (\acc e' -> nontrivialSubExprs e' `union` acc) Set.empty es
-nontrivialSubExprs _ = Set.empty
+arithSubExprs :: Expression -> Set.Set Expression
+arithSubExprs e@(InfixExpr op e1 e2) | isArith op = Set.singleton e `union`
+                                                    arithSubExprs e1 `union`
+                                                    arithSubExprs e2
+arithSubExprs (InfixExpr _ e1 e2) = arithSubExprs e1 `union` arithSubExprs e2
+arithSubExprs e@(CondExpr e1 e2 e3) = arithSubExprs e1 `union`
+                                      arithSubExprs e2 `union`
+                                      arithSubExprs e3
+arithSubExprs (AssignExpr _ _ e) = arithSubExprs e
+arithSubExprs (CallExpr e1 es) =
+  arithSubExprs e1 `union`
+  foldl' (\acc e' -> arithSubExprs e' `union` acc) Set.empty es
+arithSubExprs _ = Set.empty
+
+isArith OpMul = True
+isArith OpDiv = True
+isArith OpMod = True
+isArith OpSub = True
+isArith OpAdd = True
+isArith _ = False
+
+aExp :: Statement -> Set Expression
+aExp (BlockStmt []) = Set.empty
+aExp (BlockStmt (s : ss)) =
+  aExp s `union` aExp (BlockStmt ss)
+aExp (ExprStmt e _) = arithSubExprs e
+aExp (IfStmt cond s1 s2 _) =
+  arithSubExprs cond `union` aExp s1 `union` aExp s2
+aExp (IfSingleStmt cond s _) = arithSubExprs cond `union` aExp s
+aExp (WhileStmt cond s _) = arithSubExprs cond `union` aExp s
+aExp (ReturnStmt (Just e) _) = arithSubExprs e
+aExp _ = Set.empty
+
+allFlowStart :: Label -> Set (Label, Label) -> [(Label, Label)]
+allFlowStart l flw = Set.toList $ Set.filter (\(l', l'') -> l == l') flw

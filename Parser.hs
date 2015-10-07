@@ -9,10 +9,10 @@ import qualified Data.Map.Strict as Map
 
 type CFGGenerator = RWS String BlockGraph Label
 
-parse :: String -> Either String (Statement, BlockGraph)
+parse :: String -> Either String Program
 parse source = case JsParser.parseFromString source of
                 Right ast -> let (stmts, graph) = run ast
-                             in Right $ (BlockStmt stmts, graph)
+                             in Right (BlockStmt stmts, graph)
                 Left error -> Left $ show error
   where run p = evalRWS (mapM convertToAst $ Js.unJavaScript p) "" 1
 

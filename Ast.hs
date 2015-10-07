@@ -4,6 +4,7 @@ import qualified Data.Map.Strict as Map
 
 type Label = Integer
 type BlockGraph = Map.Map Label Statement
+type Program = (Statement, BlockGraph)
 
 data Statement = BlockStmt [Statement]
                | ExprStmt Expression Label

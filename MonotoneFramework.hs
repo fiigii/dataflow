@@ -1,38 +1,43 @@
 module MonotoneFramework where
 
 import Ast
-import Data.Set (Set, union, intersection)
+import Data.Set (Set, union, intersection, difference)
 import qualified Data.Set as Set
-import Data.Map (Map)
+import Data.Map (Map, findWithDefault, (!))
 import qualified Data.Map as Map
 import Data.List (repeat)
 import AnalysisTools
 
 data MonotoneFramework a = MonotoneInstance {
   completeLattice :: Lattice a,
-  transferFunction :: Statement -> (Set a),
+  transferFunction :: TransferFunction a,
   flowF :: Set (Label, Label),
   extreLabE :: Set Label,
-  iota :: (Set a)
+  iota :: Set a,
   graph :: BlockGraph
-}
+  }
 
 data Lattice a = Lattice {
   leastUpperBound :: Set a -> Set a -> Set a,
-  order :: Set a ->  Set a -> Bool
+  order :: Set a ->  Set a -> Bool,
   bottom :: Set a
-}
+  }
 
 data MFP a = MFP {
   circle :: Map Label (Set a),
   dot :: Map Label (Set a)
   }
+           deriving Show
   
 
 data Direction = Forward | Backward
 data Property = Must | May
 
-analyzerFor :: Ord a => Statement -> BlockGraph -> Direction ->  Property -> (Set a) -> (Set a) -> (Statement -> Set a) -> MonotoneFramework a
+type Kill a = Statement -> Set a -> Set a
+type Gen a = Statement -> Set a
+type TransferFunction a = Statement -> Set a -> Set a
+
+analyzerFor :: Ord a => Statement -> BlockGraph -> Direction ->  Property -> Set a -> Set a -> (Statement -> Set a -> Set a) -> MonotoneFramework a
 analyzerFor s g dir m botm iotaValue f = MonotoneInstance {
   completeLattice = Lattice {
      leastUpperBound = case m of Must -> intersection; May -> union,
@@ -48,19 +53,35 @@ analyzerFor s g dir m botm iotaValue f = MonotoneInstance {
   graph = g
   }
 
+mkTransFunc :: Ord a => Kill a -> Gen a -> Set a -> TransferFunction a
+mkTransFunc kill gen bottom stmt set = 
+  (set `difference` kill stmt bottom) `union` gen stmt
+
 solveMFP :: Ord a => MonotoneFramework a -> MFP a
 solveMFP monotone =
-  let workList = Set.toList $ flowF monotone
-      extremalLables = extreLabE monotone
-      actualExtremal = Set.toList $ Set.foldl'
-                       (\acc (l1, l2) -> Set.insert l1 $ Set.insert l2 acc)
-                       Set.empty $ flowF monotone
-      analysis = Map.fromList $ zip actualExtremal $ repeat (iota monotone)
-      func = transferFunction monotone
-      g = graph monotone
-      lessThan = order $ completeLattice monotone
-      iterateSolver [] = MFP {circle = Map.empty, dot = Map.empty}
-      iterateSolver ((l, l') : ws) =
-        let lStmt = g !! l
-            l'Stmt = g !! l'
-  in MFP {circle = analysis, dot = analysis}
+  let iterateSolver [] analy = analy  
+      iterateSolver ((l, l') : ws) analy =
+        if not $ lessThan new old
+        then let newWorkList = allFlowStart l' flw ++ ws
+                 newAnalysis = Map.insert l' (new `joion` old) analy
+             in iterateSolver newWorkList newAnalysis 
+        else iterateSolver ws analy
+        where lStmt = g ! l
+              l'Stmt = g ! l'
+              new = func lStmt $ findWithDefault bottm l analy
+              old = findWithDefault bottm l' analy
+      resultAnalysis = iterateSolver workList initAnalysis
+  in MFP {
+    circle = resultAnalysis,
+    dot = transMany resultAnalysis
+    }
+  where  flw = flowF monotone
+         workList = Set.toList flw
+         extremalLables = Set.toList $ extreLabE monotone
+         initAnalysis = Map.fromList $ zip extremalLables $ repeat (iota monotone)
+         func = transferFunction monotone
+         g = graph monotone
+         lessThan = order $ completeLattice monotone
+         bottm = bottom $ completeLattice monotone
+         joion = leastUpperBound $ completeLattice monotone
+         transMany = Map.mapWithKey (\k a -> func (g ! k) a)
