@@ -4,13 +4,14 @@ This program is written in Haskell and depends on the Javascript library called 
 
 You can run the code with cabal and js file must be in "test/":
 
-> $ cabal run while.js
-Preprocessing executable 'dataflow' for dataflow-0.1.0.0...
-Running dataflow...
+$ cabal run while.js  
+Preprocessing executable 'dataflow' for dataflow-0.1.0.0...  
+Running dataflow...  
 
-Kill Set:
-"1 : [z * y,y - 1]"
-"2 : [z * y]"
+```
+Kill Set:  
+"1 : [z * y,y - 1]"  
+"2 : [z * y]"  
 "3 : []"
 "4 : [z * y]"
 "5 : [z * y,y - 1]"
@@ -39,11 +40,12 @@ Exit
 "4 : []"
 "5 : []"
 "6 : []"
+```
+$ cabal run while2.js  
+Preprocessing executable 'dataflow' for dataflow-0.1.0.0...  
+Running dataflow...  
 
-> $ cabal run while2.js
-Preprocessing executable 'dataflow' for dataflow-0.1.0.0...
-Running dataflow...
-
+```
 Kill Set:
 "1 : []"
 "2 : []"
@@ -71,3 +73,4 @@ Exit
 "3 : [a + b]"
 "4 : []"
 "5 : [a + b]"
+```
