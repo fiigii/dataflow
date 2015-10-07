@@ -25,7 +25,7 @@ main = do f : _ <- getArgs
                                  let d = Map.toList dot
                                  putStr "\nExit\n"
                                  pMFP d
-                             Left error -> print error)
+                            Left error -> print error)
 
 pMFP = mapM_ (\(l, s) -> print $ show l ++ " : " ++ (show $ Set.toList s)) 
 pMap = mapM_ (\(l, s) -> print $ show l ++ " : " ++ (show $ s)) 
