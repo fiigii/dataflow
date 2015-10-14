@@ -1,0 +1,7 @@
+.DS_Store
+dist/.DS_Store
+dist/build/.DS_Store
+dist/build/autogen/.DS_Store
+dist/build/dataflow/.DS_Store
+dist/build/dataflow/dataflow-tmp/*
+test/.DS_Store
