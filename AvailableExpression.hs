@@ -5,7 +5,6 @@ import MonotoneFramework
 import Ast
 import Data.Set (Set)
 import qualified Data.Set as Set
-import Data.Map (mapWithKey)
 import qualified Data.Map as Map
 
 availableExpression :: Program -> MFP Expression
@@ -34,5 +33,5 @@ killSets (stmts, graph) =
   in Map.toList $ Map.map (\a -> Set.toList $ killAE a bottm) graph
 
 genSets :: Program -> [(Label, [Expression])]
-genSets (stmts, graph) = Map.toList $ Map.map (\a -> Set.toList $ genAE a) graph
+genSets (_, graph) = Map.toList $ Map.map (Set.toList . genAE) graph
   

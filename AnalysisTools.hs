@@ -68,6 +68,16 @@ fv (CallExpr f args) = fv f `union`
                               args
 fv _ = Set.empty
 
+allFv :: Statement -> Set.Set String
+allFv (BlockStmt []) = Set.empty
+allFv (BlockStmt (s:ss)) = allFv s `union` allFv (BlockStmt ss)
+allFv (ExprStmt e _) = fv e
+allFv (IfStmt cond th el _) = fv cond `union` allFv th `union` allFv el
+allFv (IfSingleStmt cond th _) = fv cond `union` allFv th
+allFv (WhileStmt cond body _) = fv cond `union` allFv body
+allFv (ReturnStmt (Just e) _) = fv e
+allFv _ = Set.empty
+
 arithSubExprs :: Expression -> Set.Set Expression
 arithSubExprs e@(InfixExpr op e1 e2) | isArith op = Set.singleton e `union`
                                                     arithSubExprs e1 `union`
@@ -102,4 +112,6 @@ aExp (ReturnStmt (Just e) _) = arithSubExprs e
 aExp _ = Set.empty
 
 allFlowStart :: Label -> Set (Label, Label) -> [(Label, Label)]
-allFlowStart l flw = Set.toList $ Set.filter (\(l', l'') -> l == l') flw
+allFlowStart l flw = Set.toList $ Set.filter (\(l', _) -> l == l') flw
+
+

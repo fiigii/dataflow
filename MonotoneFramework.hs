@@ -5,7 +5,6 @@ import Data.Set (Set, union, intersection, difference)
 import qualified Data.Set as Set
 import Data.Map (Map, findWithDefault, (!))
 import qualified Data.Map as Map
-import Data.List (repeat)
 import AnalysisTools
 
 data MonotoneFramework a = MonotoneInstance {
@@ -14,7 +13,7 @@ data MonotoneFramework a = MonotoneInstance {
   flowF :: Set (Label, Label),
   extreLabE :: Set Label,
   iota :: Set a,
-  graph :: BlockGraph
+  bg :: BlockGraph
   }
 
 data Lattice a = Lattice {
@@ -50,12 +49,12 @@ analyzerFor s g dir m botm iotaValue f = MonotoneInstance {
   extreLabE = case dir of Forward -> Set.singleton $ initial s
                           Backward -> final s,
   iota = iotaValue,
-  graph = g
+  bg = g
   }
 
 mkTransFunc :: Ord a => Kill a -> Gen a -> Set a -> TransferFunction a
-mkTransFunc kill gen bottom stmt set = 
-  (set `difference` kill stmt bottom) `union` gen stmt
+mkTransFunc kill gen bottm stmt set = 
+  (set `difference` kill stmt bottm) `union` gen stmt
 
 solveMFP :: Ord a => MonotoneFramework a -> MFP a
 solveMFP monotone =
@@ -67,7 +66,6 @@ solveMFP monotone =
              in iterateSolver newWorkList newAnalysis 
         else iterateSolver ws analy
         where lStmt = g ! l
-              l'Stmt = g ! l'
               new = func lStmt $ findWithDefault bottm l analy
               old = findWithDefault bottm l' analy
       resultAnalysis = iterateSolver workList initAnalysis
@@ -80,7 +78,7 @@ solveMFP monotone =
          extremalLables = Set.toList $ extreLabE monotone
          initAnalysis = Map.fromList $ zip extremalLables $ repeat (iota monotone)
          func = transferFunction monotone
-         g = graph monotone
+         g = bg monotone
          lessThan = order $ completeLattice monotone
          bottm = bottom $ completeLattice monotone
          joion = leastUpperBound $ completeLattice monotone
