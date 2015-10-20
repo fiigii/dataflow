@@ -5,11 +5,10 @@ import MonotoneFramework
 import Ast
 import Data.Set (Set)
 import qualified Data.Set as Set
-import qualified Data.Map as Map
 
 veryBusyExpression :: Program -> MFP Expression
-veryBusyExpression (stmts, graph) =
-  let addBottom = analyzerFor stmts graph Backward Must
+veryBusyExpression p@(stmts, _) =
+  let addBottom = analyzerFor p Backward Must
       botm = aExp stmts
       addIota = addBottom botm
       addFunc = addIota Set.empty

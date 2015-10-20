@@ -115,3 +115,13 @@ allFlowStart :: Label -> Set (Label, Label) -> [(Label, Label)]
 allFlowStart l flw = Set.toList $ Set.filter (\(l', _) -> l == l') flw
 
 
+allAssign :: Statement -> Set (String, Label)
+allAssign (BlockStmt []) = Set.empty
+allAssign (BlockStmt (s:ss)) =
+  allAssign s `union` allAssign (BlockStmt ss)
+allAssign (ExprStmt (AssignExpr _ (LVar x) _) l) = Set.singleton (x, l)
+allAssign (IfStmt _ s1 s2 _) =
+  allAssign s1 `union` allAssign s2
+allAssign (IfSingleStmt _ s _) = allAssign s
+allAssign (WhileStmt _ s _) = allAssign s
+allAssign _ = Set.empty

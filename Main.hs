@@ -5,6 +5,7 @@ import System.Environment
 import Parser
 import AvailableExpression
 import VeryBusy
+import ReachingDefinition
 import MonotoneFramework
 import qualified Data.Set as Set
 import qualified Data.Map as Map
@@ -31,6 +32,13 @@ main = do f : _ <- getArgs
                                  pMFP cv'
                                  putStr "Exits\n"
                                  pMFP dv'
+                                 putStrLn "\nReaching Definition"
+                                 let (MFP cr dr) = reachingDefinition p
+                                     cr' = Map.toList cr
+                                     dr' = Map.toList dr
+                                 putStrLn "Extry"
+                                 mapM_ (\(l, s) -> putStr $ show l ++ " : " ++ (show $ Set.toList s) ++ "\n") cr'
+                                 putStrLn "Exit"
+                                 mapM_  (\(l, s) -> putStr $ show l ++ " : " ++ (show $ Set.toList s) ++ "\n") dr'
                             Left error -> putStr error)
-
 pMFP = mapM_ (\(l, s) -> putStr $ show l ++ " : " ++ (show $ Set.toList s) ++ "\n") 

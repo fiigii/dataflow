@@ -36,8 +36,8 @@ type Kill a = Statement -> Set a -> Set a
 type Gen a = Statement -> Set a
 type TransferFunction a = Statement -> Set a -> Set a
 
-analyzerFor :: Ord a => Statement -> BlockGraph -> Direction ->  Property -> Set a -> Set a -> (Statement -> Set a -> Set a) -> MonotoneFramework a
-analyzerFor s g dir m botm iotaValue f = MonotoneInstance {
+analyzerFor :: Ord a => Program -> Direction ->  Property -> Set a -> Set a -> (Statement -> Set a -> Set a) -> MonotoneFramework a
+analyzerFor (s, g) dir m botm iotaValue f = MonotoneInstance {
   completeLattice = Lattice {
      leastUpperBound = case m of Must -> intersection; May -> union,
      order = case m of Must -> flip Set.isSubsetOf; May -> Set.isSubsetOf,

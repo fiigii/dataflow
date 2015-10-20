@@ -8,8 +8,8 @@ import qualified Data.Set as Set
 import qualified Data.Map as Map
 
 availableExpression :: Program -> MFP Expression
-availableExpression (stmts, graph) =
-  let addBottom = analyzerFor stmts graph Forward Must
+availableExpression p@(stmts, _) =
+  let addBottom = analyzerFor p Forward Must
       botm = aExp stmts
       addIota = addBottom botm
       addFunc = addIota Set.empty
