@@ -6,6 +6,7 @@ import Parser
 import AvailableExpression
 import VeryBusy
 import ReachingDefinition
+import LiveVariables
 import MonotoneFramework
 import qualified Data.Set as Set
 import qualified Data.Map as Map
@@ -37,8 +38,18 @@ main = do f : _ <- getArgs
                                      cr' = Map.toList cr
                                      dr' = Map.toList dr
                                  putStrLn "Extry"
-                                 mapM_ (\(l, s) -> putStr $ show l ++ " : " ++ (show $ Set.toList s) ++ "\n") cr'
+                                 pMFP cr'
                                  putStrLn "Exit"
-                                 mapM_  (\(l, s) -> putStr $ show l ++ " : " ++ (show $ Set.toList s) ++ "\n") dr'
+                                 pMFP dr'
+                                 putStrLn "\nLive Variables"
+                                 let (MFP cl dl) = liveVariables p
+                                     cl' = Map.toList cl
+                                     dl' = Map.toList dl
+                                 putStrLn "Entry"
+                                 pMFP cl'
+                                 putStrLn "Exit"
+                                 pMFP dl'
                             Left error -> putStr error)
-pMFP = mapM_ (\(l, s) -> putStr $ show l ++ " : " ++ (show $ Set.toList s) ++ "\n") 
+
+pMFP :: Show a => [(Integer, Set.Set a)] -> IO ()
+pMFP = mapM_ (\(l, s) -> putStr $ show l ++ " : " ++ show (Set.toList s) ++ "\n") 

@@ -61,14 +61,14 @@ fv :: Expression -> Set.Set String
 fv (Var v) = Set.singleton v
 fv (InfixExpr _ e1 e2) = fv e1 `union` fv e2
 fv (CondExpr e1 e2 e3) = fv e1 `union` fv e2 `union` fv e3
-fv (AssignExpr _ _ e) = fv e
+fv (AssignExpr _ (LVar x) e) = fv e `union` Set.singleton x
 fv (CallExpr f args) = fv f `union`
                        foldl' (\acc e -> fv e `union` acc)
                               Set.empty
                               args
 fv _ = Set.empty
 
-allFv :: Statement -> Set.Set String
+allFv :: Statement -> Set String
 allFv (BlockStmt []) = Set.empty
 allFv (BlockStmt (s:ss)) = allFv s `union` allFv (BlockStmt ss)
 allFv (ExprStmt e _) = fv e
