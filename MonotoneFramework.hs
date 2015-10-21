@@ -10,7 +10,7 @@ import AnalysisTools
 data MonotoneFramework a = MonotoneInstance {
   completeLattice :: Lattice a,
   transferFunction :: TransferFunction a,
-  flowF :: Set (Label, Label),
+  flowF :: Set FlowElement,
   extreLabE :: Set Label,
   iota :: Set a,
   bg :: BlockGraph
@@ -37,15 +37,15 @@ type Gen a = Statement -> Set a
 type TransferFunction a = Statement -> Set a -> Set a
 
 analyzerFor :: Ord a => Program -> Direction ->  Property -> Set a -> Set a -> (Statement -> Set a -> Set a) -> MonotoneFramework a
-analyzerFor (s, g) dir m botm iotaValue f = MonotoneInstance {
+analyzerFor (s, d, g) dir m botm iotaValue f = MonotoneInstance {
   completeLattice = Lattice {
      leastUpperBound = case m of Must -> intersection; May -> union,
      order = case m of Must -> flip Set.isSubsetOf; May -> Set.isSubsetOf,
      bottom = botm
      },
   transferFunction = f,
-  flowF = case dir of Forward -> flow s
-                      Backward -> flowReverse $ flow s,
+  flowF = case dir of Forward -> flow d s
+                      Backward -> flowReverse $ flow d s,
   extreLabE = case dir of Forward -> Set.singleton $ initial s
                           Backward -> final s,
   iota = iotaValue,
@@ -59,7 +59,7 @@ mkTransFunc kill gen bottm stmt set =
 solveMFP :: Ord a => MonotoneFramework a -> MFP a
 solveMFP monotone =
   let iterateSolver [] analy = analy  
-      iterateSolver ((l, l') : ws) analy =
+      iterateSolver ((Intra l l') : ws) analy =
         if not $ lessThan new old
         then let newWorkList = allFlowStart l' flw ++ ws
                  newAnalysis = Map.insert l' (new `joion` old) analy

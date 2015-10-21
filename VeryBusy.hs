@@ -7,7 +7,7 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 
 veryBusyExpression :: Program -> MFP Expression
-veryBusyExpression p@(stmts, _) =
+veryBusyExpression p@(stmts, _, _) =
   let addBottom = analyzerFor p Backward Must
       botm = aExp stmts
       addIota = addBottom botm

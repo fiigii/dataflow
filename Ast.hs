@@ -3,16 +3,18 @@ module Ast where
 import qualified Data.Map.Strict as Map
 
 type Label = Integer
+type Decls = Map.Map String (Label, Label)
 type BlockGraph = Map.Map Label Statement
-type Program = (Statement, BlockGraph)
+type Program = (Statement, Decls, BlockGraph)
 
 data Statement = BlockStmt [Statement]
                | ExprStmt Expression Label
+               | CallStmt String String [Expression] Label Label
                | IfStmt Expression Statement Statement Label
                | IfSingleStmt Expression Statement Label
                | WhileStmt Expression Statement Label
                | ReturnStmt (Maybe Expression) Label
-               | FunctionStmt String [String] [Statement] Label
+               | FunctionStmt String [String] [Statement] Label Label
                | EmptyStmt Label
                deriving (Eq,Ord)
 
@@ -40,17 +42,19 @@ instance Show LValue where
   show (LBracket e1 e2) = show e1 ++ "[" ++ show e2 ++ "]"
 
 instance Show Statement where
-  show (BlockStmt stmts) = foldl (\acc s -> acc ++ show s ++ "\n") "" stmts
-  show (ExprStmt e l) = show e
-  show (IfStmt cond go els l) = "if( " ++ show cond ++ " ) {\n" ++
+  show (BlockStmt stmts) = foldl (\acc s -> acc ++ show s) "" stmts
+  show (ExprStmt e _) = show e
+  show (IfStmt cond go els _) = "if( " ++ show cond ++ " ) {\n" ++
                                 show go ++ "\n} else {\n" ++ show els ++
                                 "\n}"
-  show (IfSingleStmt cond go l) = "if( " ++ show cond ++ " ) {\n" ++
+  show (IfSingleStmt cond go _) = "if( " ++ show cond ++ " ) {\n" ++
                                 show go ++ "\n}"
-  show (WhileStmt cond go l) =  "while( " ++ show cond ++ " ) {\n" ++
+  show (WhileStmt cond go _) =  "while( " ++ show cond ++ " ) {\n" ++
                                 show go ++ "\n}"
-  show (ReturnStmt e l) = "return " ++ show e
-  show (FunctionStmt f _ _ l) = "function " ++ f
+  show (ReturnStmt (Just e) _) = "return " ++ show e
+  show (ReturnStmt Nothing _) = "return"
+  show (FunctionStmt f _ _ _ _) = "function " ++ f
+  show (CallStmt res f args _ _) = res ++ " = " ++ f ++ "(" ++ show args ++ ")"
   show _ = ""
 
 instance Show Expression where

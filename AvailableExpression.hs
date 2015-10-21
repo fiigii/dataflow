@@ -8,7 +8,7 @@ import qualified Data.Set as Set
 import qualified Data.Map as Map
 
 availableExpression :: Program -> MFP Expression
-availableExpression p@(stmts, _) =
+availableExpression p@(stmts, _, _) =
   let addBottom = analyzerFor p Forward Must
       botm = aExp stmts
       addIota = addBottom botm
@@ -28,10 +28,10 @@ genAE (ExprStmt e _) = arithSubExprs e
 genAE _ = Set.empty
 
 killSets :: Program -> [(Label, [Expression])]
-killSets (stmts, graph) =
+killSets (stmts,_, graph) =
   let bottm = aExp stmts
   in Map.toList $ Map.map (\a -> Set.toList $ killAE a bottm) graph
 
 genSets :: Program -> [(Label, [Expression])]
-genSets (_, graph) = Map.toList $ Map.map (Set.toList . genAE) graph
+genSets (_,_, graph) = Map.toList $ Map.map (Set.toList . genAE) graph
   

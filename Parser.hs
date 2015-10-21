@@ -4,7 +4,7 @@ import qualified Language.ECMAScript3.Parser as JsParser
 import qualified Language.ECMAScript3.Syntax as Js
 import Ast
 import Control.Monad.RWS
-import Control.Applicative
+import Control.Applicative ((<$>), (<*>))
 import qualified Data.Map.Strict as Map
 
 type CFGGenerator = RWS String BlockGraph Label
@@ -12,13 +12,26 @@ type CFGGenerator = RWS String BlockGraph Label
 parse :: String -> Either String Program
 parse source = case JsParser.parseFromString source of
                 Right ast -> let (stmts, graph) = run ast
-                             in Right (BlockStmt stmts, graph)
-                Left error -> Left $ show error
+                                 decls = Map.fromList $ declList stmts
+                             in Right (BlockStmt stmts, decls, graph)
+                Left err -> Left $ show err
   where run p = evalRWS (mapM convertToAst $ Js.unJavaScript p) "" 1
+        declList s = map (\(FunctionStmt f _ _ ln lx) -> (f, (ln, lx))) $
+                     filter isFunc s
+        isFunc (FunctionStmt{}) = True
+        isFunc _ = False
 
 convertToAst :: Js.Statement a -> CFGGenerator Statement
 convertToAst (Js.BlockStmt _ ss) = do stmts <- mapM convertToAst ss
                                       return $ BlockStmt stmts
+convertToAst (Js.ExprStmt _ (Js.AssignExpr _ Js.OpAssign (Js.LVar _ var) (Js.CallExpr _ (Js.VarRef _ (Js.Id _ func)) args))) =
+  do lc <- freshLabel
+     actruls <- mapM convertExpr args
+     lr <- freshLabel
+     let stmt = CallStmt var func actruls lc lr
+     addToMap lc stmt
+     addToMap lr stmt
+     return stmt
 convertToAst (Js.ExprStmt _ expr) =
   do l <- freshLabel
      expr <- convertExpr expr
@@ -62,10 +75,12 @@ convertToAst (Js.ReturnStmt _ Nothing) = do l <- freshLabel
                                             addToMap l stmt
                                             return stmt
 convertToAst (Js.FunctionStmt _ (Js.Id _ name) args body) =
-  do l <- freshLabel
+  do ln <- freshLabel
      body' <- mapM convertToAst body
-     let stmt = FunctionStmt name (map (\(Js.Id _ arg) -> arg) args) body' l
-     addToMap l stmt
+     lx <- freshLabel
+     let stmt = FunctionStmt name (map (\(Js.Id _ arg) -> arg) args) body' ln lx
+     addToMap ln stmt
+     addToMap lx stmt
      return stmt
 convertToAst _ = EmptyStmt <$> freshLabel
 
@@ -76,13 +91,13 @@ convertExpr (Js.IntLit _ num) =  return $ IntLit num
 convertExpr (Js.BoolLit _ bool) =  return $ BoolLit bool
 convertExpr (Js.VarRef _ (Js.Id _ name)) =  return $ Var name
 convertExpr (Js.InfixExpr _ op exp1 exp2) =
-   InfixExpr (conertOp op) <$> (convertExpr exp1) <*> (convertExpr exp2)
+   InfixExpr (conertOp op) <$> convertExpr exp1 <*> convertExpr exp2
 convertExpr (Js.CondExpr _ cond exp1 exp2) =
-  CondExpr <$> (convertExpr cond) <*> (convertExpr exp1) <*> (convertExpr exp2)
+  CondExpr <$> convertExpr cond <*> convertExpr exp1 <*> convertExpr exp2
 convertExpr (Js.AssignExpr _ op lv expr) =
   AssignExpr (conertAss op) <$> (convertLvalue lv) <*> (convertExpr expr)
 convertExpr (Js.CallExpr _ func args) =
-  CallExpr <$> (convertExpr func) <*> (mapM convertExpr args)
+  CallExpr <$> convertExpr func <*> mapM convertExpr args
 convertExpr (Js.FuncExpr _ name args body) =
   FuncExpr name' args' <$> mapM convertToAst body
   where name' = case name of Just (Js.Id _ n) -> Just n

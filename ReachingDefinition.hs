@@ -19,7 +19,7 @@ instance Show Definition where
   show (Define v l) = "(" ++ v ++ ", " ++ show l ++ ")"
 
 reachingDefinition :: Program -> MFP Definition
-reachingDefinition p@(stmts, _) =
+reachingDefinition p@(stmts,_,_) =
   let addBottom = analyzerFor p Forward May
       botm = Set.empty
       addIota = addBottom botm
