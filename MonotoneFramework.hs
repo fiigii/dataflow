@@ -33,7 +33,7 @@ solveMFP monotone =
       iterateSolver ((Intra l l') : ws) analy =
         if not $ new `lessThan` old
         then let newWorkList = allFlowStart l' flw ++ ws
-                 newAnalysis = Map.insert l' (new `union` old) analy
+                 newAnalysis = Map.insert l' (new `join` old) analy
              in iterateSolver newWorkList newAnalysis 
         else iterateSolver ws analy
         where lStmt = g ! l
@@ -53,4 +53,5 @@ solveMFP monotone =
          g = bg monotone
          lessThan = order monotone
          bottm = bottom monotone
+         join = leastUpperBound monotone
          transMany = Map.mapWithKey (\k a -> func (g ! k) a)
