@@ -41,6 +41,7 @@ instance (Ord k, Ord v, Combinable v) => AbstractSet (Map k v) where
   type Element (Map k v) = (k, v)
   less s1 s2 = foldlWithKey' (\acc k v -> acc && v <= s2 ! k) True s1
   union s1 s2 = Map.mapWithKey (\k v -> combin v $ s2 ! k) s1
+  intersection = undefined
   singleton = uncurry Map.singleton
   difference = Map.difference
 
@@ -83,6 +84,8 @@ make v program = fromList $
 constantInstance :: Program -> MonotoneFramework State
 constantInstance program@(_,_,g) = MonotoneInstance {
   bottom = make Bottom program,
+  order = less,
+  leastUpperBound = union,
   transferFunction = transfer,
   flowF = entireFlow program,
   extreLabE = Set.singleton $ entireInitial program,

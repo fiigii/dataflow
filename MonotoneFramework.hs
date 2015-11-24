@@ -12,6 +12,8 @@ import Lattice
 data MonotoneFramework a where
   MonotoneInstance :: AbstractSet a => {
     bottom :: a,
+    order :: a -> a -> Bool,
+    leastUpperBound :: a -> a -> a,
     transferFunction :: Statement -> a -> a,
     flowF :: Set FlowElement,
     extreLabE :: Set Label,
@@ -29,7 +31,7 @@ solveMFP :: (AbstractSet a, Eq a) => MonotoneFramework a -> MFP a
 solveMFP monotone =
   let iterateSolver [] analy = analy  
       iterateSolver ((Intra l l') : ws) analy =
-        if new /= old
+        if not $ new `lessThan` old
         then let newWorkList = allFlowStart l' flw ++ ws
                  newAnalysis = Map.insert l' (new `union` old) analy
              in iterateSolver newWorkList newAnalysis 
@@ -43,10 +45,12 @@ solveMFP monotone =
     dot = transMany resultAnalysis
     }
   where  flw = flowF monotone
-         workList = [x | l <- extremalLables ,x <- allFlowStart l flw]
+         workList = Set.toList flw
+         --workList = [x | l <- extremalLables ,x <- allFlowStart l flw]
          extremalLables = Set.toList $ extreLabE monotone
          initAnalysis = Map.fromList $ zip extremalLables $ repeat (iota monotone)
          func = transferFunction monotone
          g = bg monotone
-         bottm = bottom $ monotone
+         lessThan = order monotone
+         bottm = bottom monotone
          transMany = Map.mapWithKey (\k a -> func (g ! k) a)

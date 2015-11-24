@@ -1,20 +1,18 @@
 module Main where
 
 import System.IO
-import System.Environment
 import Parser
 import AvailableExpression
 import VeryBusy
 import ReachingDefinition
 import LiveVariables
-import AnalysisTools
+import ConstantPropagation
 import MonotoneFramework
 import qualified Data.Set as Set
 import qualified Data.Map as Map
 
 main :: IO ()
-main = do 
-          withFile "test/while2.js" ReadMode
+main = do withFile "test/while2.js" ReadMode
             (\handle -> do source <- hGetContents handle
                            case parse source of
                             Right p@(s,_, _) ->
@@ -49,8 +47,17 @@ main = do
                                  putStrLn "Entry"
                                  pMFP cl'
                                  putStrLn "Exit"
-                                 pMFP dl' 
+                                 pMFP dl'
+                                 putStrLn "\nLive Variables"
+                                 let (MFP cc dc) = constants p
+                                     cc' = Map.toList cc
+                                     dc' = Map.toList dc
+                                 putStrLn "Entry"
+                                 print cc'
+                                 putStrLn "Exit"
+                                 print dc'
                             Left error -> putStr error)
+            
 
 pMFP :: Show a => [(Integer, Set.Set a)] -> IO ()
 pMFP = mapM_ (\(l, s) -> putStr $ show l ++ " : " ++ show (Set.toList s) ++ "\n") 

@@ -14,6 +14,7 @@ data Property = Must | May
 instance Ord a => AbstractSet (Set a) where
   type Element (Set a) = a
   union = Set.union
+  intersection = Set.intersection
   less = Set.isSubsetOf
   singleton = Set.singleton
   difference = Set.difference
@@ -21,6 +22,9 @@ instance Ord a => AbstractSet (Set a) where
 analyzerFor :: AbstractSet a => Program -> Direction ->  Property -> a -> a -> (Statement -> a -> a) -> MonotoneFramework a
 analyzerFor p@(s, decls, g) dir m botm iotaValue f = MonotoneInstance {
   bottom = botm,
+  order = case m of Must -> flip less; May -> less,
+  leastUpperBound = case m of Must -> intersection
+                              May -> union,
   transferFunction = f,
   flowF = case dir of Forward -> entireFlow p
                       Backward -> flowReverse $ entireFlow p,
