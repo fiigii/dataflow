@@ -13,40 +13,19 @@ import qualified Data.Set as Set
 import qualified Data.Map as Map
 
 main :: IO ()
-main = do f : _ <- getArgs
-          withFile f ReadMode
+main = do 
+          withFile "test/while2.js" ReadMode
             (\handle -> do source <- hGetContents handle
                            case parse source of
-                            Right p@(s, d, _) ->
-                              do let g = Map.fromList $ stmtsGraph s
-                                 putStrLn "\nInterprocedural Flow"
-                                 mapM_ print $ Set.toList $ interFlow p
-                                 putStrLn "\nInits"
-                                 let tmpI = Map.mapWithKey (\l b -> show l ++ " : " ++ show b ++ " ---> " ++ (show $ initial b)) g
-                                 mapM_ putStrLn tmpI
-                                 putStrLn "\nFinals"
-                                 let tmpF = Map.mapWithKey (\l b -> show l ++ " : " ++ show b ++ " ---> " ++
-                                                                    (show $ Set.toList $ final b)) g
-                                 mapM_ putStrLn tmpF
-                                 putStrLn "\nBlocks"
-                                 let tmpB = Map.mapWithKey (\l b -> show l ++ " : " ++ show b ++ " ---> " ++
-                                                                    (show $ Set.toList $ blocks b)) g
-                                 mapM_ putStrLn tmpB
-                                 putStrLn "\nLabels"
-                                 let tmpL = Map.mapWithKey (\l b -> show l ++ " : " ++ show b ++ " ---> " ++
-                                                                    (show $ Set.toList $ labels b)) g
-                                 mapM_ putStrLn tmpL
-                                 putStrLn "\nFlow"
-                                 print $ Set.toList $ flow d s
-                              {-
+                            Right p@(s,_, _) ->
                               do putStr "\nAvailable Expression\n"
-                                 let (MFP circle dot) = availableExpression p
-                                     c = Map.toList circle
+                                 let (MFP c d) = availableExpression p
+                                     c' = Map.toList c
                                  putStr "Entry\n"
-                                 pMFP c
-                                 let d = Map.toList dot
+                                 pMFP c'
+                                 let d' = Map.toList d
                                  putStr "Exit\n"
-                                 pMFP d
+                                 pMFP d'
                                  putStr "\nVery Busy Expression\n"
                                  let (MFP cv dv) = veryBusyExpression p
                                      cv' = Map.toList cv
@@ -70,7 +49,7 @@ main = do f : _ <- getArgs
                                  putStrLn "Entry"
                                  pMFP cl'
                                  putStrLn "Exit"
-                                 pMFP dl' -}
+                                 pMFP dl' 
                             Left error -> putStr error)
 
 pMFP :: Show a => [(Integer, Set.Set a)] -> IO ()

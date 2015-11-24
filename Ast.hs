@@ -2,20 +2,24 @@ module Ast where
 
 import qualified Data.Map.Strict as Map
 
+data CallSite = Call | Return
+              deriving (Eq, Ord, Show)
+
 type Label = Integer
-type Decls = Map.Map String (Label, Label)
+type Decls = [Statement]
 type BlockGraph = Map.Map Label Statement
 type Program = (Statement, Decls, BlockGraph)
 
 data Statement = BlockStmt [Statement]
                | ExprStmt Expression Label
-               | CallStmt String String [Expression] Label Label
+               | CallStmt String String Statement [Expression] CallSite Label
                | IfStmt Expression Statement Statement Label
                | IfSingleStmt Expression Statement Label
                | WhileStmt Expression Statement Label
                | ReturnStmt (Maybe Expression) Label
-               | FunctionStmt String [String] [Statement] Label Label
-               | EmptyStmt Label
+               | FunctionStmt String [String] [Statement] Label
+               | VarDeclStmt String (Maybe Expression) Label
+               | EmptyStmt
                deriving (Eq,Ord)
 
 data Expression = StringLit String
@@ -53,8 +57,8 @@ instance Show Statement where
                                 show go ++ "\n}"
   show (ReturnStmt (Just e) _) = "return " ++ show e
   show (ReturnStmt Nothing _) = "return"
-  show (FunctionStmt f _ _ _ _) = "function " ++ f
-  show (CallStmt res f args _ _) = res ++ " = " ++ f ++ "(" ++ show args ++ ")"
+  show (FunctionStmt f _ _ _) = "function " ++ f
+  show (CallStmt res f _ args _ _) = res ++ " = " ++ f ++ "(" ++ show args ++ ")"
   show _ = ""
 
 instance Show Expression where

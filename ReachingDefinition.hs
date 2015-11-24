@@ -3,6 +3,7 @@ module ReachingDefinition where
 import AnalysisTools
 import MonotoneFramework
 import Ast
+import Distributive
 import Data.Set (Set, union)
 import qualified Data.Set as Set
 
@@ -18,7 +19,7 @@ instance Show LabelOrUnknown where
 instance Show Definition where
   show (Define v l) = "(" ++ v ++ ", " ++ show l ++ ")"
 
-reachingDefinition :: Program -> MFP Definition
+reachingDefinition :: Program -> MFP (Set Definition)
 reachingDefinition p@(stmts,_,_) =
   let addBottom = analyzerFor p Forward May
       botm = Set.empty

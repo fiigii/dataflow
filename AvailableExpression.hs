@@ -3,11 +3,12 @@ module AvailableExpression where
 import AnalysisTools
 import MonotoneFramework
 import Ast
+import Distributive
 import Data.Set (Set)
 import qualified Data.Set as Set
 import qualified Data.Map as Map
 
-availableExpression :: Program -> MFP Expression
+availableExpression :: Program -> MFP (Set Expression)
 availableExpression p@(stmts, _, _) =
   let addBottom = analyzerFor p Forward Must
       botm = aExp stmts
@@ -26,12 +27,3 @@ genAE (ExprStmt (AssignExpr _ (LVar x) expr) _) =
   Set.filter (not . Set.member x . fv) (arithSubExprs expr)
 genAE (ExprStmt e _) = arithSubExprs e
 genAE _ = Set.empty
-
-killSets :: Program -> [(Label, [Expression])]
-killSets (stmts,_, graph) =
-  let bottm = aExp stmts
-  in Map.toList $ Map.map (\a -> Set.toList $ killAE a bottm) graph
-
-genSets :: Program -> [(Label, [Expression])]
-genSets (_,_, graph) = Map.toList $ Map.map (Set.toList . genAE) graph
-  

@@ -3,10 +3,11 @@ module VeryBusy where
 import AnalysisTools
 import MonotoneFramework
 import Ast
+import Distributive
 import Data.Set (Set)
 import qualified Data.Set as Set
 
-veryBusyExpression :: Program -> MFP Expression
+veryBusyExpression :: Program -> MFP (Set Expression)
 veryBusyExpression p@(stmts, _, _) =
   let addBottom = analyzerFor p Backward Must
       botm = aExp stmts

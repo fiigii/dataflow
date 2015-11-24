@@ -3,10 +3,11 @@ module LiveVariables where
 import AnalysisTools
 import MonotoneFramework
 import Ast
+import Distributive
 import Data.Set (Set)
 import qualified Data.Set as Set
 
-liveVariables :: Program -> MFP String
+liveVariables :: Program -> MFP (Set String)
 liveVariables p =
   let addBottomTop = analyzerFor p Backward May
       botm = Set.empty
